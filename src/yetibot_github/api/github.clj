@@ -194,9 +194,9 @@
   (with-url endpoint
     (r/tags org-name repo auth)))
 
-(defn pulls [org-name repo]
+(defn pulls [owner repo & [opts]]
   (with-url endpoint
-    (pulls/pulls org-name repo auth)))
+    (pulls/pulls owner repo (merge opts auth))))
 
 (defn contributor-statistics [org-name repo]
   (with-url endpoint
@@ -278,11 +278,16 @@
 
 ;; search
 
-(defn search-pull-requests [org-name keywords & [opts]]
+(defn search-pull-requests [owner keywords & [opts]]
   (with-url endpoint
     (search/search-issues keywords
-                          (merge {:state "open" :type "pr" :user org-name} opts)
+                          (merge {:state "open" :type "pr" :user owner} opts)
                           (merge {:sort "created"} auth))))
+
+(comment
+  (search-pull-requests "yetibot" "" {:state "open"})
+  (pulls/pulls "yetibot" "yetibot" (merge {:state "open"} auth))
+  )
 
 (defn search-code [keywords & [query opts]]
   (with-url endpoint
