@@ -4,8 +4,7 @@
   :plugins [[lein-parent "0.3.8"]
             [lein-inferv "20201020.015531.74d2ced"]]
   :parent-project {:coords [yetibot/parent "20201027.011403.84290c7"]
-                   :inherit [[:profiles :dev]
-                             :license
+                   :inherit [:license
                              :repl-options
                              :plugins
                              :deploy-repositories
