@@ -1,4 +1,4 @@
-(ns yetibot-github.commands.pom
+(ns yetibot-github.commands.poms
   (:require
     [clojure.string :as s]
     [yetibot-github.api.github :as gh]
