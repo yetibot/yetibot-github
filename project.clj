@@ -12,4 +12,4 @@
                              :dependencies
                              :managed-dependencies]}
   :dependencies [[district0x/graphql-query "1.0.6"]]
-  :profiles {:provided {:dependencies [[irresponsible/tentacles "0.6.6"]]}})
+  :profiles {:provided {:dependencies [[irresponsible/tentacles "0.6.9"]]}})

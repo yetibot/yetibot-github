@@ -140,6 +140,11 @@
 
 ;;; repos
 
+(defn repo [owner repo]
+  (with-url
+    endpoint
+    (r/specific-repo owner repo auth)))
+
 (defn repos [org-name]
   (with-url
     endpoint

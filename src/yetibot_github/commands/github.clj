@@ -39,6 +39,11 @@
       {:result/value (gh/fmt-events response)
        :result/data response})))
 
+(defn format-repo
+  [{description :description html_url :html_url {owner :login} :owner repo-name :name}]
+  (info "format-repo" {:description description :owner owner :repo-name repo-name})
+  (format "[%s/%s](%s) %s" owner repo-name html_url (or description "")))
+
 (defn repos
   "gh repos # list repos for the first configured org
    gh repos <org-name> # list repos under <org-name>"
@@ -47,17 +52,13 @@
                    (second match)
                    (first (gh/org-names)))
         repos-response (gh/repos org-name)]
-    (info "repos response" (pr-str repos-response))
     (or
-      (report-if-error repos-response)
-      {:result/data repos-response
-       :result/value
-       (map
-         (fn [{:keys [description html_url]
-               repo-name :name}]
-           (format "%s/%s - %s %s" org-name repo-name html_url
-                   (or description "")))
-         repos-response)})))
+     (report-if-error repos-response)
+     {:result/data repos-response
+      :result/value
+      (map
+       format-repo
+       repos-response)})))
 
 (defn orgs
   "gh orgs # show configured orgs"
@@ -314,6 +315,24 @@
                            owner repo
                            (s/join " " (:names result)))}))
 
+(defn repo
+  "gh repo <owner>/<repo> # show info about a repo"
+  [{[_ owner repo] :match}]
+  (let [result (gh/repo owner repo)]
+    (info "repo response" {:owner owner :repo repo :result result
+                           :foramtted (format-repo result)})
+    (or
+     (report-if-error result)
+     {:result/data result
+      :result/value (format-repo result)})))
+
+
+(comment
+  (def yeti-repo (gh/repo "yetibot" "yetibot"))
+  (:description yeti-repo)
+  (format-repo yeti-repo)
+  )
+
 (when (gh/configured?)
   (cmd-hook
    {"gh" #"gh" "github" #"github"}
@@ -324,6 +343,7 @@
    #"^search\s+repos\s+(.+)" search-repos-cmd
    #"^search\s+code\s+(.+)" search-code-cmd
    #"^search\s+(.+)" search-code-cmd ;; default search
+   #"^repo\s+(\S+)\/(\S+)" repo
    #"^repos\s+(\S+)" repos
    #"^repos" repos
    ;; TODO

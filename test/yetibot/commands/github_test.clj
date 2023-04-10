@@ -1,8 +1,8 @@
 (ns yetibot.commands.github-test
   (:require
-    [midje.sweet :refer [fact => anything]]
-    [yetibot-github.commands.github :refer [stats-cmd]]
-    [yetibot-github.api.github :as gh]))
+   [midje.sweet :refer [fact => anything]]
+   [yetibot-github.commands.github :refer [stats-cmd format-repo]]
+   [yetibot-github.api.github :as gh]))
 
 (def mock-poll-result {:a 1 :d 1 :c 1 :con 4})
 (def mock-repo-info ["wilfred" "tv"])
