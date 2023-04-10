@@ -112,24 +112,30 @@
             incidents))}))
 
 (defn pull-requests
-  "gh pr <org-name> # list open pull requests for <org-name>"
-  [{[_ org-name] :match}]
-  (let [prs (gh/search-pull-requests org-name "" {:state "open"})]
+  "gh pr <owner> # list open pull requests for <owner>
+   gh pr <owner>/<repo> # list open pull requests for <owner>/<repo>"
+  [{[_ owner repo] :match}]
+  (info "pull-requests" {:owner owner :repo repo})
+  (let [org-wide? (not repo)
+        prs (if org-wide? 
+              (gh/search-pull-requests owner "" {:state "open"})
+              (gh/pulls owner repo {:state "open"}))]
     (or
-      (report-if-error prs)
-      {:result/data prs
-       :result/value
-       (->> prs
-            :items
-            (map (fn [pr]
-                   (s/join
-                     " "
-                     (remove nil?
-                             [(format "[%s]" (-> pr :user :login))
-                              (when-let [a (:assignee pr)]
-                                (format "[assignee: %s]" (:login a)))
-                              (:title pr)
-                              (-> pr :pull_request :html_url)])))))})))
+     (report-if-error prs)
+     {:result/data prs
+      :result/collection-path (if org-wide? [:items])
+      :result/value
+      (->> prs
+           (#(if org-wide? (:items %) %))
+           (map (fn [pr]
+                  (s/join
+                   " "
+                   (remove nil?
+                           [(format "[%s]" (-> pr :user :login))
+                            (when-let [a (:assignee pr)]
+                              (format "[assignee: %s]" (:login a)))
+                            (:title pr)
+                            (-> pr :html_url)])))))})))
 
 (comment
   ;; TODO!
@@ -283,7 +289,6 @@
      topic-name
      (when short_description (str " - " short_description))
      " "
-
      topic-url)))
 
 (defn search-topics-cmd
@@ -353,6 +358,7 @@
    #"orgs" orgs
    #"incidents" incidents
    #"status$" status
+   #"pr\s+(\S+)\/(\S+)" pull-requests
    #"pr\s+(\S+)" pull-requests
    #"stats\s+(\S+)\/(\S+)" stats-cmd
    #"contributors\s+(\S+)\/(\S+)\s+since\s+(\d+)\s+(minutes*|hours*|days*|weeks*|months*)" contributors-since-cmd
