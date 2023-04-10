@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v3
+      # lein  image doesn't come with git anymore
+      - name: install-git
+        run: apt update && apt install -y git
       - name: test
         run: lein midje
       - name: release
