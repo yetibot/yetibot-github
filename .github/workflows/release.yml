@@ -18,6 +18,8 @@ jobs:
         run: apt update && apt install -y git
       - name: test
         run: lein midje
+      - name: ls
+        run: ls -al
       - name: release
         env:
           CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
