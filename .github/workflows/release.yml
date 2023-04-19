@@ -40,8 +40,8 @@ jobs:
         # `lein pprint :version`
         run: echo "INFERV_TIMESTAMP_MS=`date +%s%3N`" >> $GITHUB_ENV
 
-      - name: version
-        run: echo "VERSION=`lein pprint :version | sed 's/\"//g'`"
+      - name: env
+        run: env
 
       - name: release
         env:
