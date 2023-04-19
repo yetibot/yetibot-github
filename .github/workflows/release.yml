@@ -11,11 +11,13 @@ jobs:
     runs-on: ubuntu-latest
     container: clojure:lein
     steps:
-      - name: checkout
-        uses: actions/checkout@v3
-      # lein  image doesn't come with git anymore
+      # lein  image doesn't come with git anymore. make sure to install git
+      # before actions/checkout or actions/checkout will use the REST API and
+      # there won't be a .git folder present, which lein expects during release.
       - name: install-git
         run: apt update && apt install -y git
+      - name: checkout
+        uses: actions/checkout@v3
       - name: test
         run: lein midje
       - name: ls
