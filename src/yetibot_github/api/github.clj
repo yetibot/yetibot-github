@@ -1,5 +1,6 @@
 (ns yetibot-github.api.github
   (:require
+   [clojure.data.json :as json]
    [taoensso.timbre :refer [info]]
    [clojure.spec.alpha :as s]
    [yetibot.core.spec :as yspec]
@@ -131,7 +132,7 @@
               (format (str endpoint "/repos/%s/%s/commits/%s") org-name repo sha1))
         raw-data (client/get uri {:headers {"Authorization" (str "token " token)}})
         raw-data-body (:body raw-data)
-        json-data (clojure.data.json/read-json raw-data-body)]
+        json-data (json/read-json raw-data-body)]
     (map :filename (:files json-data))))
 
 (defn was-file-changed?
