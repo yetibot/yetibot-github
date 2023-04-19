@@ -1,16 +1,16 @@
 (ns yetibot-github.commands.github
   (:require
-   [yetibot.core.util.http :refer [encode]]
-   [taoensso.timbre :refer [info]]
-   [yetibot-github.api.github :as gh]
-   [clojure.string :as s]
-   [yetibot.core.util.http :refer [get-json]]
-   [yetibot.core.hooks :refer [cmd-hook]]
-   [inflections.core :refer [plural]]
    [clj-time [core :refer [ago minutes hours days weeks years months]]]
    [clj-time.coerce :as c]
    [clj-time.format :as f]
-   [robert.bruce :refer [try-try-again] :as rb]))
+   [clojure.string :as s]
+   [inflections.core :refer [plural]]
+   [robert.bruce :refer [try-try-again] :as rb]
+   [taoensso.timbre :refer [info]]
+   [yetibot-github.api.github :as gh]
+   [yetibot.core.hooks :refer [cmd-hook]]
+   [yetibot.core.util :refer [image?]]
+   [yetibot.core.util.http :refer [get-json encode]]))
 
 (def date-formatter (f/formatters :date))
 (def date-hour-formatter (f/formatter "MMM d, yyyy 'at' hh:mm"))
@@ -43,6 +43,10 @@
   [{description :description html_url :html_url {owner :login} :owner repo-name :name}]
   (info "format-repo" {:description description :owner owner :repo-name repo-name})
   (format "[%s/%s](%s) %s" owner repo-name html_url (or description "")))
+
+(defn format-url-as-markdown-image
+  [image-url]
+  (format "![%s](%s)" image-url image-url))
 
 (defn repos
   "gh repos # list repos for the first configured org
@@ -111,13 +115,26 @@
                     incident_updates))))
             incidents))}))
 
+(defn pull-request-approve
+  "gh pr approve <owner>/<repo>#<pr-number> <comment> # approve a pull request with <comment>
+   gh pr approve <owner>/<repo>#<pr-number> # approve a pull request"
+  [{[_ owner repo-name pr-number pr-comment] :match}]
+  (let [pr-comment-md (if (and pr-comment (image? pr-comment))
+                        (format-url-as-markdown-image pr-comment)
+                        pr-comment)
+        response (gh/create-review
+                  owner repo-name pr-number "APPROVE" pr-comment-md)]
+    (or (report-if-error response)
+        {:result/value (format "Approved %s/%s#%s" owner repo-name pr-number)
+         :result/data response})))
+
 (defn pull-requests
   "gh pr <owner> # list open pull requests for <owner>
    gh pr <owner>/<repo> # list open pull requests for <owner>/<repo>"
-  [{[_ owner repo] :match}]
+  [{[_ owner repo pr-number] :match}]
   (info "pull-requests" {:owner owner :repo repo})
   (let [org-wide? (not repo)
-        prs (if org-wide? 
+        prs (if org-wide?
               (gh/search-pull-requests owner "" {:state "open"})
               (gh/pulls owner repo {:state "open"}))]
     (or
@@ -358,6 +375,8 @@
    #"orgs" orgs
    #"incidents" incidents
    #"status$" status
+   #"pr\s+approve\s+(\S+)\/(\S+)\#(\d+)\s+(.*)" pull-request-approve
+   #"pr\s+approve\s+(\S+)\/(\S+)\#(\d+)" pull-request-approve
    #"pr\s+(\S+)\/(\S+)" pull-requests
    #"pr\s+(\S+)" pull-requests
    #"stats\s+(\S+)\/(\S+)" stats-cmd

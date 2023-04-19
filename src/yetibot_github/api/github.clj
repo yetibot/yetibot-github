@@ -1,22 +1,23 @@
 (ns yetibot-github.api.github
   (:require
-    [taoensso.timbre :refer [info]]
-    [clojure.spec.alpha :as s]
-    [yetibot.core.spec :as yspec]
-    [tentacles
-     [core :refer [with-url]]
-     [search :as search]
-     [pulls :as pulls]
-     [issues :as issues]
-     [users :as u]
-     [repos :as r]
-     [events :as e]
-     [data :as data]
-     [orgs :as o]]
-    [clojure.string :as string]
-    [clj-http.client :as client]
-    [graphql-query.core :refer [graphql-query]]
-    [yetibot.core.config :refer [get-config]]))
+   [taoensso.timbre :refer [info]]
+   [clojure.spec.alpha :as s]
+   [yetibot.core.spec :as yspec]
+   [tentacles
+    [core :refer [with-url]]
+    [search :as search]
+    [pulls :as pulls]
+    [issues :as issues]
+    [users :as u]
+    [repos :as r]
+    [events :as e]
+    [data :as data]
+    [orgs :as o]]
+   [clojure.string :as string]
+   [clj-http.client :as client]
+   [lambdaisland.uri :refer [uri join]]
+   [graphql-query.core :refer [graphql-query]]
+   [yetibot.core.config :refer [get-config]]))
 
 ;;; uses tentacles for most api calls, but falls back to raw REST calls when
 ;;; tentacles doesn't support something (like Accept headers for raw blob
@@ -145,6 +146,7 @@
     endpoint
     (r/specific-repo owner repo auth)))
 
+
 (defn repos [org-name]
   (with-url
     endpoint
@@ -197,6 +199,28 @@
 (defn pulls [owner repo & [opts]]
   (with-url endpoint
     (pulls/pulls owner repo (merge opts auth))))
+
+
+; (defn raw
+;   "Retrieve raw contents from GitHub"
+;   [org-name repo path & [{:keys [branch]}]]
+;   (let [git-ref (or branch "master")]
+;     (let [uri (format (str endpoint "/repos/%s/%s/contents/%s?ref=%s") org-name repo path git-ref)]
+;       (client/get uri
+;                   {:accept "application/vnd.github.raw+json"
+;                   :headers {"Authorization" (str "token " token)}}))))
+
+(defn create-review [owner repo pr-number event body]
+  (let [pr-url (str
+                (assoc
+                 (uri endpoint)
+                 :path (str "/repos/" owner "/" repo "/pulls/" pr-number "/reviews")))]
+    (client/post
+     pr-url
+     {:headers {"Authorization" (str "bearer " (:token (config)))}
+      :content-type :json
+      :form-params (merge {:event event}
+                          (if body {:body body}))})))
 
 (defn contributor-statistics [org-name repo]
   (with-url endpoint
