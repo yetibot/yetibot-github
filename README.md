@@ -37,6 +37,7 @@ gh releases show <org>/<repo-name> # retrieve info about the latest release on a
 gh status # show GitHub's current system status
 gh topics set <owner>/<repo> <collection or space-separated list of topics>
 gh orgs # show configured orgs
+gh comment <org>/<repo>#<issue_number> <comment> # post a comment on a GitHub issue
 ```
 
 ## License
