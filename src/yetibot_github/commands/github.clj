@@ -277,6 +277,15 @@
     {:result/error
      (format "No releases found on %s/%s" org-name repo)}))
 
+(defn comment-on-issue-cmd
+  "gh comment <org>/<repo>#<issue_number> <comment> # post comment on given issue number for a Github repository"
+  [{[_ org-name repo issue-number comment] :match}]
+  (let [response (gh/create-comment-on-issue org-name repo issue-number comment)]
+    (or
+     (report-if-error response)
+     {:result/data response
+      :result/value (format "Comment added to issue #%s" issue-number)})))
+
 (defn search-code-cmd
   "gh search <query> # search GitHub code for <query>"
   [{[_ query] :match}]
@@ -385,4 +394,5 @@
    #"branches\s+(\S+)\/(\S+)" branches
    #"releases\s+show\s+(\S+)\/(\S+)\s+(\S+)" show-release-info-by-tag-cmd
    #"releases\s+show\s+(\S+)\/(\S+)" show-latest-release-info-cmd
-   #"releases\s+(\S+)\/(\S+)" list-releases-info-cmd))
+   #"releases\s+(\S+)\/(\S+)" list-releases-info-cmd
+   #"(?s)^comment\s+(\S+)\/(\S+)#(\d+)\s+(.+)\z" comment-on-issue-cmd))
